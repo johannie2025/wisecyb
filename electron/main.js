@@ -85,5 +85,5 @@ h('vault:list', () => vault.list()); h('vault:reveal', id => vault.reveal(id)); 
 h('vault:gen', (n, o) => vault.generate(n, o)); h('vault:audit', () => vault.audit());
 h('leak:pwd', p => leak.pwned(p)); h('leak:email', e => leak.email(e));
 h('wifi:info', () => wifi.info(), true); h('wifi:devices', () => wifi.devices(), true);
-h('vpn:installed', () => vpn.installed()); h('vpn:install', () => vpn.install(), true); h('vpn:list', () => vpn.list(), true); h('vpn:connect', (ip, ks) => vpn.connect(ip, ks), true); h('vpn:disconnect', () => vpn.disconnect()); h('vpn:restore', () => vpn.restoreNetwork());
+h('vpn:installed', () => vpn.installed()); h('vpn:install', () => vpn.install(), true); h('vpn:list', () => vpn.list(), true); h('vpn:connect', (ip, ks, u, p) => vpn.connect(ip, ks, u, p), true); h('vpn:import', async () => { const r = await dialog.showOpenDialog(win, { filters: [{ name: 'OpenVPN Config', extensions: ['ovpn'] }], properties: ['openFile'] }); return r.canceled ? { ok: false } : vpn.importConfig(r.filePaths[0]); }, true); h('vpn:disconnect', () => vpn.disconnect()); h('vpn:restore', () => vpn.restoreNetwork());
 h('safe:open', u => safemoney.open(u), true);
