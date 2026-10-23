@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "build:ui": "vite build",
-    "build": "vite build && electron-builder --win --x64 --publish never"
+    "build": "vite build && electron-builder --win --x64 --publish never",
     "start": "electron .",
     "test": "node tests/logic.test.js"
   },
