@@ -1,0 +1,60 @@
+{
+  "name": "wise-cybersecurity-suite",
+  "version": "1.1.0",
+  "description": "WiseCybersecurity Suite - Antivirus / Firewall / Optimizer for Windows",
+  "main": "electron/main.js",
+  "author": "Wise Design",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "build:ui": "vite build",
+    "build": "vite build && electron-builder --win --x64",
+    "start": "electron .",
+    "test": "node tests/logic.test.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "chokidar": "^3.6.0",
+    "node-cron": "^3.0.3",
+    "node-machine-id": "^1.1.12"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "lucide-react": "^0.395.0",
+    "postcss": "^8.4.38",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.3.1",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.wisedesign.cybersecurity",
+    "productName": "WiseCybersecurity",
+    "files": [
+      "electron/**/*",
+      "dist/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "requestedExecutionLevel": "requireAdministrator",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": true
+    }
+  }
+}

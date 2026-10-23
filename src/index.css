@@ -1,0 +1,10 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+body { background:#05080f; color:#dbe4f0; font-family: 'Segoe UI', system-ui, sans-serif; overflow:hidden; }
+.glow-green { box-shadow: 0 0 24px rgba(16,185,129,.35); }
+.glow-red { box-shadow: 0 0 24px rgba(239,68,68,.45); }
+.glow-yellow { box-shadow: 0 0 24px rgba(245,158,11,.35); }
+.scanline { position:relative; overflow:hidden; }
+.scanline::after { content:''; position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#22d3ee,transparent); animation: scan 2.2s linear infinite; }
+@keyframes scan { from { top:0 } to { top:100% } }
+.fade-in { animation: fade .4s ease both; }
+@keyframes fade { from { opacity:0; transform: translateY(6px) } to { opacity:1; transform:none } }
