@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Lock, Unlock, KeyRound, Globe, Wifi, Shield, Eye, Copy, Trash2, Plus } from 'lucide-react';
-import { Card, Toggle, Btn, Input, VKeyboard, inv, w } from '../ui.jsx';
+import { Card, Toggle, Btn, Bar, Input, VKeyboard, useJob, inv, w } from '../ui.jsx';
 
 function Vault({ t }) {
   const [s, setS] = useState({ exists: false, unlocked: false }); const [pw, setPw] = useState(''); const [vk, setVk] = useState(false); const [err, setErr] = useState(''); const [items, setItems] = useState([]); const [f, setF] = useState({ title: '', username: '', secret: '', url: '', type: 'login' }); const [audit, setAudit] = useState({}); const [shown, setShown] = useState({});
@@ -27,29 +27,34 @@ function Leak({ t }) {
 }
 
 function Tools({ t, st, setSt }) {
-  const [url, setUrl] = useState(''); const [ru, setRu] = useState(null); const [sk, setSk] = useState(null);
+  const [url, setUrl] = useState(''); const [ru, setRu] = useState(null); const sj = useJob('stalker.scan'); const sk = sj.result;
   const sw = (k, ch) => (v) => { setSt({ ...st, [k]: v }); inv(ch, v); };
   return <>
     <Card><Toggle label={t.webshield} on={st.web} onChange={sw('web', 'web:block')} /><Toggle label={t.webcam} on={st.cam} onChange={sw('cam', 'priv:webcam')} /><Toggle label={t.mic} on={st.mic} onChange={sw('mic', 'priv:mic')} /></Card>
     <Card><div className="font-semibold mb-3 flex items-center gap-2"><Globe size={16} />{t.urlcheck}</div><div className="flex gap-2"><Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" className="flex-1" /><Btn onClick={async () => setRu(await inv('url:check', url))}>{t.run}</Btn></div>
       {ru && ru.ok && <div className={`text-sm mt-2 ${ru.verdict === 'dangerous' ? 'text-red-400' : ru.verdict === 'suspicious' ? 'text-amber-400' : 'text-emerald-400'}`}>{ru.verdict.toUpperCase()} · {ru.reasons.join(', ') || '—'}</div>}</Card>
-    <Card><div className="flex justify-between items-center"><div className="font-semibold flex items-center gap-2"><Shield size={16} />{t.stalker}</div><Btn onClick={async () => setSk(await inv('stalker:scan'))}>{t.run}</Btn></div>
+    <Card><div className="flex justify-between items-center"><div className="font-semibold flex items-center gap-2"><Shield size={16} />{t.stalker}</div><Btn busy={sj.running} onClick={() => sj.start()}>{t.run}</Btn></div>{sj.running && <div className="mt-2"><Bar indeterminate /></div>}
       {Array.isArray(sk) && <div className="text-xs mt-2">{sk.length ? sk.map((x, i) => <div key={i} className="text-red-400">{x.kind}: {x.name}</div>) : <span className="text-emerald-400">{t.clean0}</span>}</div>}</Card>
   </>;
 }
 export function Privacy(p) { return <><Vault {...p} /><Leak {...p} /><Tools {...p} /></>; }
 
-export function Network({ t }) {
-  const [wi, setWi] = useState(null); const [dv, setDv] = useState([]); const [vs, setVs] = useState({ state: 'disconnected' }); const [list, setList] = useState([]); const [ks, setKs] = useState(true); const [has, setHas] = useState(true); const [safe, setSafe] = useState('');
-  useEffect(() => { inv('wifi:info').then(setWi); inv('wifi:devices').then(r => setDv((r && r.devices) || [])); inv('vpn:installed').then(setHas); return w.on('vpn:state', setVs); }, []);
-  const lv = { critical: 'text-red-400', weak: 'text-amber-400', ok: 'text-emerald-400', best: 'text-emerald-400' };
+export function Network({ t, toast }) {
+  const [wi, setWi] = useState(null); const [dv, setDv] = useState([]); const [vs, setVs] = useState({ state: 'disconnected' }); const [list, setList] = useState([]); const [ks, setKs] = useState(true); const [has, setHas] = useState(true); const [safe, setSafe] = useState(''); const [lb, setLb] = useState(false);
+  const cj = useJob('vpn.connect');
+  useEffect(() => { inv('wifi:info').then(setWi); inv('wifi:devices').then(r => setDv((r && r.devices) || [])); inv('vpn:installed').then(setHas); inv('vpn:status').then(s => s && s.connected && setVs({ state: 'connected', country: s.country })); return w.on('vpn:state', setVs); }, []);
+  useEffect(() => { if (cj.done && cj.result && cj.result.ok === false) toast(cj.result.error || cj.error || 'VPN', 'err'); }, [cj.done]);
+  const lv = { critical: 'text-red-400', weak: 'text-amber-400', ok: 'text-emerald-400', best: 'text-emerald-400' }; const connected = vs.state === 'connected';
   return <>
     <Card><div className="font-semibold mb-2 flex items-center gap-2"><Wifi size={16} />{t.wifi}</div>{wi && wi.connected ? <div className="text-sm">{wi.ssid} · <span className={lv[wi.level]}>{wi.auth}</span> · {wi.signal}%</div> : <div className="text-xs text-slate-500">—</div>}
+      {wi && wi.connected && <div className="mt-2 w-48"><Bar pct={+wi.signal || 0} color={wi.level === 'critical' ? 'bg-red-500' : 'bg-emerald-400'} /></div>}
       <div className="text-xs text-slate-400 mt-3 mb-1">{t.devices}</div><div className="grid grid-cols-2 gap-1 text-[11px] font-mono">{dv.map(d => <div key={d.mac}>{d.ip} · {d.mac}</div>)}</div></Card>
-    <Card><div className="flex justify-between items-center mb-3"><div className="font-semibold">{t.vpn}</div><div className={`text-xs ${vs.state === 'connected' ? 'text-emerald-400' : vs.state === 'blocked' ? 'text-red-400' : 'text-slate-400'}`}>{vs.state}{vs.country ? ' · ' + vs.country : ''}</div></div>
-      {!has ? <Btn onClick={() => inv('vpn:install')}>{t.installVpn}</Btn> : <>
-        <div className="flex gap-2 items-center mb-3"><Btn kind="sec" onClick={async () => setList((await inv('vpn:list')) || [])}>↻ VPNGate</Btn><Btn kind="sec" onClick={() => inv('vpn:disconnect')}>{t.disconnect}</Btn><Btn kind="sec" onClick={() => inv('vpn:restore')}>{t.restoreNet}</Btn><div className="ml-auto"><Toggle label={t.killsw} on={ks} onChange={setKs} /></div></div>
-        <div className="max-h-52 overflow-y-auto text-xs">{Array.isArray(list) && list.map(s => <div key={s.ip} className="flex justify-between py-1 border-b border-slate-800"><span>{s.country} · {s.ip} · {Math.round(s.speed / 1e6)} Mbps · {s.ping} ms</span><Btn kind="sec" onClick={() => inv('vpn:connect', s.ip, ks)}>{t.connect}</Btn></div>)}</div></>}</Card>
+    <Card tone={connected ? 'green' : vs.state === 'blocked' ? 'red' : 'none'} glow={connected}><div className="flex justify-between items-center mb-3"><div className="font-semibold">{t.vpn}</div><div className={`text-xs flex items-center gap-1.5 ${connected ? 'text-emerald-400' : vs.state === 'blocked' ? 'text-red-400' : 'text-slate-400'}`}>{(connected || vs.state === 'connecting' || vs.state === 'reconnecting') && <span className="w-2 h-2 rounded-full bg-current pulse-dot" />}{vs.state}{vs.country ? ' · ' + vs.country : ''}</div></div>
+      {!has ? <Btn onClick={async () => { const r = await inv('vpn:install'); setHas(await inv('vpn:installed')); }}>{t.installVpn}</Btn> : <>
+        <div className="flex gap-2 items-center mb-3 flex-wrap"><Btn kind="sec" busy={lb} onClick={async () => { setLb(true); const l = await inv('vpn:list'); setList(Array.isArray(l) ? l : []); setLb(false); }}>↻ VPNGate</Btn><Btn kind="sec" onClick={() => inv('vpn:disconnect')}>{t.disconnect}</Btn><Btn kind="sec" onClick={() => inv('vpn:restore')}>{t.restoreNet}</Btn><div className="ml-auto"><Toggle label={t.killsw} on={ks} onChange={setKs} /></div></div>
+        {cj.running && <div className="mb-3"><Bar pct={cj.pct} /><div className="text-xs text-cyan-300 mt-1">{cj.msg}</div></div>}
+        <div className="max-h-52 overflow-y-auto text-xs">{list.map(s => <div key={s.ip} className="flex justify-between py-1 border-b border-slate-800 fade-in"><span>{s.country} · {s.ip} · {Math.round(s.speed / 1e6)} Mbps · {s.ping} ms</span><Btn kind="sec" disabled={cj.running} onClick={() => cj.start(s.ip, ks)}>{t.connect}</Btn></div>)}</div>
+        {list.length > 0 && <div className="mt-2"><Btn disabled={cj.running} onClick={() => cj.start(null, ks)}>{t.connect} (auto)</Btn></div>}</>}</Card>
     <Card><div className="font-semibold mb-2">{t.safe}</div><div className="flex gap-2"><Input value={safe} onChange={e => setSafe(e.target.value)} placeholder="https://mabanque.com" className="flex-1" /><Btn onClick={() => inv('safe:open', safe)}>{t.open}</Btn></div></Card>
   </>;
 }
@@ -58,7 +63,7 @@ export function Settings({ t, st, setSt, lang, setLang }) {
   const [ex, setEx] = useState((st.exclusions || []).join('\n')); const [key, setKey] = useState(st.hibpKey || ''); const [msg, setMsg] = useState('');
   const up = (k, ch) => (v) => { setSt({ ...st, [k]: v }); inv(ch || 'settings:set', ch ? v : { [k]: v }); };
   return <>
-    <Card><Toggle label={t.scheduled} on={st.scheduled} onChange={up('scheduled')} /><Toggle label={t.gaming} on={st.gaming} onChange={up('gaming')} /><Toggle label={t.cfa} on={st.cfa} onChange={up('cfa', 'cfa:set')} />
+    <Card><Toggle label={t.scheduled} on={st.scheduled} onChange={up('scheduled')} /><Toggle label={t.gaming} on={st.gaming} onChange={up('gaming')} /><Toggle label={t.talosIpsOpt} on={st.talosIps !== false} onChange={up('talosIps')} /><Toggle label={t.cfa} on={st.cfa} onChange={up('cfa', 'cfa:set')} />
       <div className="flex gap-1 mt-3">{['fr', 'es', 'en'].map(l => <button key={l} onClick={() => { setLang(l); inv('settings:set', { lang: l }); }} className={`px-3 py-1 text-xs rounded ${lang === l ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800'}`}>{l.toUpperCase()}</button>)}</div></Card>
     <Card><div className="font-semibold mb-2">{t.rollback}</div><Btn kind="sec" onClick={() => inv('rollback:snapshot')}>{t.snap}</Btn></Card>
     <Card><div className="font-semibold mb-2">{t.exclusions}</div><textarea value={ex} onChange={e => setEx(e.target.value)} rows={4} className="w-full bg-slate-800 rounded-xl p-2 text-xs font-mono outline-none" />
